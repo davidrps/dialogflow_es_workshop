@@ -142,6 +142,25 @@ Puedes ver que Dialogflow extrajo de forma correcta `Terror` para el parámetro 
 
 ![Dialogflow New Parameter Test](src/simulator-movie-genre.png)
 
+#### Parámetros requeridos
+¿Qué pasa si el usuario no especifica cuál es el género de películas que quiere?
+Ingresa en el simulador `Quiero un listado de películas`
+Dialogflow identifica el intent pero como el parámetro no ha sido proporcionado no puede generar una respuesta adecuada, por lo que el parámetro debería se requerido siempre.
+Para definir el parámetro como requerido sigue estos pasos.
+1. Selecciona el intent `request-movie-list` que creaste en los pasos anteriores.
+2. En la sección **Action and parameters** haz clic en el checkbox **REQUIRED** del parámetro `movie-genre`
+
+![Dialogflow New Parameter Required](src/intents-parameter-required.png)
+
+3. Haz clic en el botón **Save** (Guardar) y espera hasta que el cuadro de diálogo **Entrenamiento del agente** indique que se completó el entrenamiento.
+4. En el simulador, ingresa `Quiero un listado de películas`. Dialogflow genera la respuesta por defecto `What is the movie-genre?` solicitando el parámetro.
+5. Para personalizar la respuesta haz clic en **PROMPTS** y agrega el mensaje para solicitar el género `¿De cuál género?`
+
+![Dialogflow New Parameter Required Prompt](src/intents-parameter-required-prompt.png)
+
+3. Haz clic en el botón **Save** (Guardar) y espera hasta que el cuadro de diálogo **Entrenamiento del agente** indique que se completó el entrenamiento.
+4. En el simulador, ingresa nuevamente `Quiero un listado de películas`.
+
 ### Contextos
 Para controlar el flujo de la conversación, puedes usar el contexto.
 
@@ -169,7 +188,8 @@ Los intents de seguimiento solo coinciden después de que el intent superior hay
     - `Quiero un listado de 5 resultados`
     - `10 películas`
 4. Asigna el nombre `results` al parámetro numérico y asegúrate que es correctamente asignado a los números en las respuestas.
-5. Haz clic en el botón **Save** (Guardar) y espera hasta que el cuadro de diálogo Entrenamiento del agente indique que se completó el entrenamiento.
+5. Define el parámetro como **REQUIRED** y asigna el **PROMPT** como `Por favor ingresa la cantidad de resultados requerido`.
+6. Haz clic en el botón **Save** (Guardar) y espera hasta que el cuadro de diálogo Entrenamiento del agente indique que se completó el entrenamiento.
 
 #### Prueba el intent de seguimiento
 Ingresa `Dame un listado de películas de Comedia` en el simulador y, luego, responde con `10 películas`.
@@ -186,7 +206,7 @@ Inspecciona el intent `request-movie-list - custom` para verificar que `request-
 ![Input Context](src/input-context.png)
 
 #### Contextos y parámetros
-Para hacer referencia al idioma en la respuesta, haz lo siguiente:
+Para hacer referencia al género en la respuesta, haz lo siguiente:
 
 1. Actualiza la respuesta de texto del intent `request-movie-list - custom` a `El listado de películas de #request-movie-list-followup.movie-genre con $results resultados se está generando en este momento. Espere por favor...`
 2. Haz clic en el botón **Save** (Guardar) y espera hasta que el cuadro de diálogo Entrenamiento del agente indique que se completó el entrenamiento.
@@ -198,12 +218,85 @@ Ingresa `Dame un listado de películas de Comedia` en el simulador y, luego, res
 
 ![Dialogflow Test Context Parameter](src/simulator-movie-genre-list.png)
 
+### Fulfillment
+
+#### Habilita e implementa la entrega con el editor directo
+Para habilitar e implementar el código de entrega predeterminado con el editor intercalado, haz lo siguiente:
+
+1. Haz clic en **Fulfillment** (Entregas) en el menú de la barra lateral izquierda.
+2. Establece el **Inline Editor** (Editor Directo) como **Enabled** (Habilitado).
+3. Si no habilitaste la facturación en los pasos de configuración, se te solicitará que habilites la facturación ahora. Cloud Functions tiene cargos asociados, pero el servicio está disponible sin cargo hasta una cantidad significativa de invocaciones mensuales. Ten en cuenta que aún debes registrar y proporcionar una cuenta de facturación. Cancela cuando quieras.
+4. Haz clic en **Deploy** (Implementar) en la parte inferior del formulario y espera hasta que los cuadros de diálogo indiquen que se implementó.
+
+#### Prueba las entregas
+Debes habilitar la entrega para cada intent que la requiera. Para habilitar la entrega en el intent de bienvenida predeterminado, haz lo siguiente:
+
+1. Busca en el código del editor de entregas la función `welcome(agent)` y personaliza el mensaje de respuesta
+```
+function welcome(agent) {
+  agent.add(`Hola, soy el Agente Virtual del Workshop!`);
+}
+```
+2. Haz clic en **Deploy** (Implementar) en la parte inferior del formulario y espera hasta que los cuadros de diálogo indiquen que se implementó.
+3. Haz clic en **Intents**, en el menú de la barra lateral izquierda.
+4. Haz clic en el intent de bienvenida predeterminado **Default Welcome Intent**.
+5. Desplázate hacia abajo hasta la sección **Fulfillment** (Entregas) y activa la opción **Enable webhook call for this intent** (Habilitar llamadas de webhook para esta intent).
+6. Haz clic en el botón **Save** (Guardar) y espera hasta que el diálogo **Agent Training** indique que se completó el entrenamiento.
+
+>***Nota: La habilitación de las entregas reemplaza las respuestas establecidas en la sección de respuestas de la intent. Sólo si fallan las entregas, se usarán las entradas de la sección Respuestas.***
+
+#### Crea un controlador de entregas personalizado
+Los pasos anteriores usan un controlador proporcionado por el código del editor intercalado predeterminado. Para crear un controlador personalizado, sigue estos pasos:
+
+1. Habilita la entrega para el intent get-agent-name que creaste en los pasos anteriores.
+2. Haz clic en Entregas en el menú de la barra lateral izquierda y examina el código en el editor intercalado.
+3. Busca esta línea:
+```
+exports.dialogflowFirebaseFulfillment = functions.https.onRequest((request, response) => {
+```
+La función `onRequest` controla todas las solicitudes de Dialogflow. En el cuerpo de esta función, se definen las funciones específicas del controlador. Estas funciones del controlador se invocan cuando se detecta una coincidencia con los intents asociados.
+
+4. Debajo de los controladores existentes, agrega esta función para la intent `get-agent-name`:
+```
+function getAgentNameHandler(agent) {
+  agent.add('Desde entrega: Mi nombre es Miss Minutes!');
+}
+```
+5. Debajo de las definiciones de la función del controlador, están las llamadas `intentMap.set()`. Estas llamadas asocian los controladores específicos con los intents por nombre. Por ejemplo, `intentMap.set('Default Welcome Intent', welcome)` asocia el controlador welcome con el intent denominado `Default Welcome Intent`.
+6. Debajo de las llamadas existentes `intentMap.set`, agrega esta línea para el intent `get-agent-name`:
+```
+intentMap.set('get-agent-name', getAgentNameHandler);
+```
+7. Haz clic en **Deploy** (Implementar) en la parte inferior del formulario.
+8. Ingresa `Cuál es tu nombre?` en el simulador. La respuesta `Desde entrega: Mi nombre es Miss Minutes!` se envía desde tu controlador nuevo.
+
+#### Accede a los valores de los parámetros
+En los pasos anteriores, has creado un intent `set-language` para identificar el idioma. El intent usa el parámetro `language`. En esta sección, accederás al valor de este parámetro en tu controlador de entregas.
+
+Para agregar el controlador, sigue estos pasos:
+1. Habilita la entrega para el intent `set-language`.
+2. Haz clic en **Fulfillment** en el menú de la barra lateral izquierda.
+3. Como en los pasos anteriores, agrega el siguiente controlador y la llamada intentMap:
+```
+function languageHandler(agent) {
+    const language = agent.parameters.language;
+    if (language) {
+        agent.add(`Desde entrega: Actualmente no se encuentra disponible el cambio de idioma a ${language}`);
+    } else {
+        agent.add(`Desde entrega: ¿En qué puedo ayudarle?`);
+    }
+}
+```
+```
+intentMap.set('set-language', languageHandler);
+```
+4. Haz clic en **Deploy** (Implementar) en la parte inferior del formulario.
+5. Ingresa `Quiero cambiar el idioma a Inglés` en el simulador. La respuesta `Desde entrega: Actualmente no se encuentra disponible el cambio de idioma a Inglés` se envía desde tu controlador nuevo.
+
 ## Telegram
 La integración de Telegram con Dialogflow te permite crear fácilmente bots de Telegram con la comprensión del lenguaje natural basada en la tecnología de Dialogflow.
 
-### Limitaciones
-| **Esta integración solo admite el idioma predeterminado del agente.** |
-| --- |
+>***Nota: Esta integración solo admite el idioma predeterminado del agente.*** |
 
 ### Configura Telegram
 A fin de configurar la integración de Telegram para tu agente, necesitarás lo siguiente:
