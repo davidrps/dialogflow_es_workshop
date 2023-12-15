@@ -293,6 +293,9 @@ intentMap.set('set-language', languageHandler);
 4. Haz clic en **Deploy** (Implementar) en la parte inferior del formulario.
 5. Ingresa `Quiero cambiar el idioma a Inglés` en el simulador. La respuesta `Desde entrega: Actualmente no se encuentra disponible el cambio de idioma a Inglés` se envía desde tu controlador nuevo.
 
+>Si quieres profundizar en el uso de webhooks y entregas, puedes seguir la guía para crear entradas en Google calendar desde Dialogflow en el siguiente link: [Tutorial: Crea entregas mediante webhook](https://cloud.google.com/dialogflow/es/docs/tutorials/build-an-agent/create-fulfillment-using-webhook?hl=es-419)
+
+
 ## Telegram
 La integración de Telegram con Dialogflow te permite crear fácilmente bots de Telegram con la comprensión del lenguaje natural basada en la tecnología de Dialogflow.
 
